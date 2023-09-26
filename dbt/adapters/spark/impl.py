@@ -1,4 +1,5 @@
 import re
+import sys
 from concurrent.futures import Future
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Union, Type, Tuple, Callable, Set
@@ -203,14 +204,21 @@ class SparkAdapter(SQLAdapter):
         return relations
 
     def list_relations_without_caching(self, schema_relation: BaseRelation) -> List[BaseRelation]:
+
         """Distinct Spark compute engines may not support the same SQL featureset. Thus, we must
         try different methods to fetch relation information."""
-
+        tmp_schema_relation = schema_relation
+        table = ""
+        for i in range(len(sys.argv)):
+            if sys.argv[i] == '--select' or sys.argv[i] == '-s':
+                table = sys.argv[i + 1]
+                break
+        if table:
+            tmp_schema_relation = str(tmp_schema_relation) + "." + table
         kwargs = {"schema_relation": schema_relation}
-
         try:
             # Default compute engine behavior: show tables extended
-            show_table_extended_rows = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
+            show_table_extended_rows = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs={"schema_relation": tmp_schema_relation})
             return self._build_spark_relation_list(
                 row_list=show_table_extended_rows,
                 relation_info_func=self._get_relation_information,

@@ -266,10 +266,11 @@
 {% endmacro %}
 
 {% macro spark__list_relations_without_caching(relation) %}
+  {% set db_name  =  relation.split('.')[0]| string%}
+  {% set table_name  =  relation.split('.')[1]| string%}
   {% call statement('list_relations_without_caching', fetch_result=True) -%}
-    show table extended in {{ relation }} like '*'
+    show table extended in {{ db_name }} like '{{ table_name }}'
   {% endcall %}
-
   {% do return(load_result('list_relations_without_caching').table) %}
 {% endmacro %}
 
